@@ -18,31 +18,31 @@ async fn create_student(
 ) -> impl Responder {
     let query = r#"
         INSERT INTO students (user_id, name, email, parent_id)
-        VALUES ($1, $2, $3)
+        VALUES ($1, $2, $3, $4)
         RETURNING id, user_id, name, email, parent_id, students_date
     "#;
 
     match sqlx::query_as::<_, StudentModel>(query)
-        .bind(&body.user_id)
+        .bind(body.user_id)
         .bind(&body.name)
-        .bind(&body.email) 
-        .bind(&body.parent_id) 
+        .bind(&body.email)
+        .bind(&body.parent_id)
         .fetch_one(&data.db)
         .await
     {
-        Ok(new_student) => {
+        Ok(student) => {
             let response = json!({
                 "status": "success",
-                "student": {
-                    "id": new_student.id,
-                    "user_id": new_student.user_id,
-                    "name": new_student.name,
-                    "email": new_student.email,
-                    "parent_id": new_student.parent_id,
-                    "students_data": new_student.students_date
+                "parent": {
+                    "id": student.id,
+                    "user_id": student.user_id,
+                    "name": student.name,
+                    "email": student.email,
+                    "parent_id": student.parent_id,
+                    "students_date": student.students_date
                 }
             });
-            HttpResponse::Ok().json(response)
+            HttpResponse::Created().json(response)
         }
         Err(error) => {
             let response = json!({

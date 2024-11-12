@@ -12,10 +12,11 @@ use std::error::Error;
 
 async fn process_video(file_path: &str) -> Result<(), Box<dyn Error>> {
     let output_file = format!("{}.mp4", file_path);
-    
+
     let output = Command::new("ffmpeg")
         .args(&["-i", file_path, &output_file])
-        .output()?;
+        .output()
+        .map_err(|e| format!("Erro ao executar ffmpeg: {}", e))?;
 
     if output.status.success() {
         println!("Vídeo transcodificado com sucesso: {}", file_path);
@@ -33,6 +34,7 @@ async fn process_video(file_path: &str) -> Result<(), Box<dyn Error>> {
 async fn consume_queue(channel: Channel) -> Result<(), Box<dyn Error>> {
     let queue_name = "transcode_queue";
 
+    // Declarando a fila
     let _queue = channel
         .queue_declare(
             queue_name,
@@ -40,6 +42,8 @@ async fn consume_queue(channel: Channel) -> Result<(), Box<dyn Error>> {
             FieldTable::default(),
         )
         .await?;
+
+    println!("Fila '{}' foi declarada com sucesso.", queue_name);
 
     let mut consumer = channel
         .basic_consume(
@@ -56,10 +60,13 @@ async fn consume_queue(channel: Channel) -> Result<(), Box<dyn Error>> {
         match delivery_result {
             Ok((channel, delivery)) => {
                 let msg = String::from_utf8_lossy(&delivery.data);
+                println!("Mensagem recebida: {}", msg);
 
                 match process_video(&msg).await {
                     Ok(_) => {
+                        // Confirma que a mensagem foi processada com sucesso
                         delivery.ack(BasicAckOptions::default()).await?;
+                        println!("Mensagem processada e confirmada.");
                     }
                     Err(e) => {
                         eprintln!("Erro ao processar vídeo: {:?}", e);
@@ -78,13 +85,16 @@ async fn consume_queue(channel: Channel) -> Result<(), Box<dyn Error>> {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let conn = Connection::connect(
-        "amqp://guest:guest@localhost:5672/%2f",
+        "amqp://guest:guest@localhost:5672/%2f", 
         ConnectionProperties::default(),
     )
     .await?;
 
+    println!("Conexão com o RabbitMQ estabelecida.");
+
     let channel = conn.create_channel().await?;
 
+    // Consumindo a fila
     consume_queue(channel).await?;
 
     Ok(())

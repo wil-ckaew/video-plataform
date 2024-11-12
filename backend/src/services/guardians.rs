@@ -1,5 +1,7 @@
 use actix_web::{
-    get, post, delete, patch, web::{Data, Json, scope, Query, Path, ServiceConfig}, HttpResponse, Responder
+    get, post, delete, patch,
+    web::{Data, Json, Query, Path, ServiceConfig},
+    HttpResponse, Responder,
 };
 use serde_json::json;
 use crate::{
@@ -14,16 +16,16 @@ use uuid::Uuid;
 #[post("/guardians")]
 async fn create_guardian(
     body: Json<CreateGuardianSchema>,
-    data: Data<AppState>
+    data: Data<AppState>,
 ) -> impl Responder {
     let query = r#"
-        INSERT INTO guardians (id, user_id, name, relationship)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO guardians (user_id, name, relationship)
+        VALUES ($1, $2, $3)
         RETURNING id, user_id, name, relationship, guardians_date
-        "#;
-  
-        match sqlx::query_as::<_, GuardianModel>(query)
-        .bind(&body.user_id)
+    "#;
+
+    match sqlx::query_as::<_, GuardianModel>(query)
+        .bind(body.user_id)
         .bind(&body.name)
         .bind(&body.relationship)
         .fetch_one(&data.db)
@@ -40,7 +42,7 @@ async fn create_guardian(
                     "guardians_date": guardian.guardians_date
                 }
             });
-            HttpResponse::Ok().json(response)
+            HttpResponse::Created().json(response)
         }
         Err(error) => {
             let response = json!({

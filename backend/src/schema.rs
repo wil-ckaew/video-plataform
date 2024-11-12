@@ -21,6 +21,10 @@ pub struct UpdateUserSchema {
 /// Estrutura para criar um novo endereço
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateAddressSchema {
+    pub user_id: Option<Uuid>, 
+    pub parent_id: Option<Uuid>,
+    pub student_id: Option<Uuid>,  
+    pub guardian_id: Option<Uuid>, 
     pub street: String,                 // Rua do endereço
     pub city: String,                   // Cidade do endereço
     pub state: String,                  // Estado do endereço
@@ -30,6 +34,10 @@ pub struct CreateAddressSchema {
 /// Estrutura para atualizar um endereço existente
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateAddressSchema {
+    pub user_id: Option<Uuid>, 
+    pub parent_id: Option<Uuid>,
+    pub student_id: Option<Uuid>,  
+    pub guardian_id: Option<Uuid>, 
     pub street: Option<String>,         // Rua opcional do endereço
     pub city: Option<String>,           // Cidade opcional do endereço
     pub state: Option<String>,          // Estado opcional do endereço
@@ -76,7 +84,7 @@ pub struct CreatePhoneSchema {
     pub student_id: Option<Uuid>,       // ID do aluno associado ao telefone (opcional)
     pub guardian_id: Option<Uuid>,     // ID do responsável associado ao telefone (opcional)
     pub number: String,                 // Número de telefone
-    pub phone_type: String,            // Tipo de telefone
+    pub phone_type: Option<String>,         // Tipo de telefone
 }
 
 /// Estrutura para atualizar um telefone existente
@@ -120,20 +128,34 @@ pub struct CreateTagSchema {
 pub struct UpdateTagSchema {
     pub name: Option<String>,           // Nome da tag (opcional para atualização)
 }
-
+/*
 /// Estrutura para criar um novo vídeo
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateVideoSchema {
-    pub title: String,                  // Título do vídeo
-    pub description: String,            // Descrição do vídeo
-    pub thumbnail_path: String,         // Caminho para a miniatura
-    pub slug: String,                   // Slug do vídeo
-    pub published_at: Option<NaiveDateTime>, // Data de publicação
-    pub is_published: Option<bool>,     // Status de publicação (opcional)
-    pub author_id: Uuid,                // ID do autor
-    pub num_likes: i32,                 // Número de likes
-    pub num_views: i32,                 // Número de visualizações
+    pub title: String,
+    pub description: Option<String>,
+    pub thumbnail_path: Option<String>,
+    pub slug: String,
+    pub published_at: Option<NaiveDateTime>,
+    pub is_published: Option<bool>,
+    pub num_likes: Option<i32>,
+    pub num_views: Option<i32>,
+    pub author_id: Uuid,
+   // pub video_date: Option<NaiveDateTime>,
 }
+   */
+   #[derive(Debug, Serialize, Deserialize)]
+   pub struct CreateVideoSchema {
+       pub title: String,
+       pub description: Option<String>,        // Alterado para opcional
+       pub thumbnail_path: Option<String>,     // Alterado para opcional
+       pub slug: Option<String>,               // Alterado para opcional
+       pub published_at: Option<NaiveDateTime>,// Alterado para opcional
+       pub is_published: Option<bool>,         // Alterado para opcional
+       pub num_likes: Option<i32>,             // Alterado para opcional
+       pub num_views: Option<i32>,             // Alterado para opcional
+       pub author_id: Option<Uuid>,            // Já era opcional
+   }
 
 /// Estrutura para atualizar um vídeo existente
 #[derive(Debug, Serialize, Deserialize)]

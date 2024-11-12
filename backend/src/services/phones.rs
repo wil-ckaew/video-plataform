@@ -37,9 +37,17 @@ async fn create_phone(
         Ok(phone) => {
             let response = json!( {
                 "status": "success",
-                "phone": phone
+                "phone": {
+                    "id": phone.id,
+                    "user_id": phone.user_id,
+                    "parent_id": phone.parent_id,
+                    "student_id": phone.student_id,
+                    "guardian_id": phone.guardian_id,
+                    "number": phone.number,
+                    "phone_type": phone.phone_type,
+                }
             });
-            HttpResponse::Ok().json(response)
+            HttpResponse::Created().json(response)
         }
         Err(error) => {
             let response = json!( {

@@ -3,7 +3,7 @@ use actix_cors::Cors;
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::env;
-//use actix_files::Files;
+use actix_files::Files;
 use lapin::{Connection, ConnectionProperties, Channel}; // RabbitMQ
 use std::sync::Arc;
 
@@ -69,7 +69,7 @@ async fn main() -> std::io::Result<()> {
                     .allow_any_method() // Allow any HTTP method
                     .allow_any_header() // Allow any headers
             )
-
+            .service(Files::new("/thumbnails", "./media/thumbnails").show_files_listing()) // Servindo arquivos de thumbnails
     })
     .bind("127.0.0.1:8081")? // Bind the server to port 8080
     .run()

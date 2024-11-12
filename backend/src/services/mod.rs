@@ -9,6 +9,9 @@ pub mod students;
 pub mod guardians;
 pub mod addresses;
 pub mod phones;
+pub mod videouploads;
+pub mod videotags;
+pub mod playes;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
@@ -16,11 +19,14 @@ pub fn config(cfg: &mut ServiceConfig) {
             .configure(videos::config_videos)
             .configure(videomedias::configurar_videos_media)
             .configure(tags::config_tags)
+            .configure(videotags::config_videotags)
             .configure(users::config_users)
             .configure(parents::config_parents)
             .configure(students::config_students)
             .configure(guardians::config_guardians)
             .configure(addresses::config_addresses)
             .configure(phones::config_phones)
+            .configure(videouploads::video_uploads_scope)
+            .configure(playes::config_playes)
     );
 }

@@ -9,11 +9,11 @@ use crate::{
     AppState
 };
 
-/// Rota para criar uma nova tag
+/// Função para criar um nova tag
 #[post("/tags")]
-async fn create_tag(
+pub async fn create_tag(
     body: Json<CreateTagSchema>,
-    data: Data<AppState>
+    data: Data<AppState>,
 ) -> impl Responder {
     let query = r#"
         INSERT INTO tags (name)
@@ -26,14 +26,23 @@ async fn create_tag(
         .fetch_one(&data.db)
         .await
     {
-        Ok(tag) => HttpResponse::Ok().json(json!({
-            "status": "success",
-            "tag": tag
-        })),
-        Err(error) => HttpResponse::InternalServerError().json(json!({
-            "status": "error",
-            "message": format!("Failed to create tag: {:?}", error)
-        })),
+        Ok(tag) => {
+            let response = json!({
+                "status": "sucesso",
+                "tag": {
+                    "id": tag.id,
+                    "name": tag.name,
+                }
+            });
+            HttpResponse::Ok().json(response)
+        }
+        Err(error) => {
+            let response = json!({
+                "status": "erro",
+                "mensagem": format!("Falha ao criar name: {:?}", error),
+            });
+            HttpResponse::InternalServerError().json(response)
+        }
     }
 }
 
@@ -129,8 +138,8 @@ async fn delete_tag_by_id(
 }
 
 /// Configuração das rotas de tag
-pub fn config_tags(cfg: &mut ServiceConfig) {
-    cfg.service(create_tag)
+pub fn config_tags(conf: &mut ServiceConfig) {
+    conf.service(create_tag)
        .service(get_all_tags)
        .service(get_tag_by_id)
        .service(update_tag_by_id)

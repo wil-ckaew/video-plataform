@@ -1,0 +1,11 @@
+/home/kimel/rust/video-plataform/producer/target/debug/deps/liblitemap-02ba0f1cdd68205c.rmeta: /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/lib.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/map.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/mod.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/slice_impl.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/vec_impl.rs
+
+/home/kimel/rust/video-plataform/producer/target/debug/deps/liblitemap-02ba0f1cdd68205c.rlib: /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/lib.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/map.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/mod.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/slice_impl.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/vec_impl.rs
+
+/home/kimel/rust/video-plataform/producer/target/debug/deps/litemap-02ba0f1cdd68205c.d: /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/lib.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/map.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/mod.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/slice_impl.rs /home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/vec_impl.rs
+
+/home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/lib.rs:
+/home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/map.rs:
+/home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/mod.rs:
+/home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/slice_impl.rs:
+/home/kimel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/litemap-0.7.3/src/store/vec_impl.rs:

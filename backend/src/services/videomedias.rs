@@ -17,7 +17,7 @@ pub async fn criar_video_media(
     data: Data<AppState>,
 ) -> impl Responder {
     let query = r#"
-        INSERT INTO videomedia (video_id, video_path, status)
+        INSERT INTO videomedias (video_id, video_path, status)
         VALUES ($1, $2, $3)
         RETURNING id, video_id, video_path, status
     "#;

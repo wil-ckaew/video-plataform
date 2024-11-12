@@ -5,12 +5,14 @@ services:
     build: ./backend
     container_name: backend
     ports:
-      - "8080:8081"
+      - "8080:8080"  # Certifique-se de que o backend está configurado para escutar nesta porta
     environment:
       DATABASE_URL: "postgres://retesp:senha123@db:5432/4linhas_db"
     depends_on:
       - db
       - rabbitmq
+    volumes:
+      - ./media:/app/media  # Monta a pasta local `media` no diretório `/app/media` do backend
 
   transcoder:
     build: ./transcoder
@@ -19,6 +21,8 @@ services:
       - rabbitmq
     environment:
       RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672"
+    volumes:
+      - ./media:/app/media  # Monta a mesma pasta local `media` no diretório `/app/media` do transcoder
 
   frontend:
     build: ./frontend
@@ -46,6 +50,9 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"  # Porta para o painel de controle do RabbitMQ
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
 
 volumes:
   pgdata:

@@ -85,7 +85,8 @@ pub struct VideoModel {
     pub num_likes: Option<i32>,                // Número de likes (opcional)
     pub num_views: Option<i32>,                // Número de visualizações (opcional)
     pub author_id: Option<Uuid>,               // ID do autor
-    pub video_date: Option<DateTime<Utc>>,     // Data de criação
+    pub video_date: Option<DateTime<Utc>>, // Data de criação
+    //pub video_date: Option<NaiveDateTime>,
 }
 
 #[derive(FromRow,Debug, Serialize, Deserialize)]

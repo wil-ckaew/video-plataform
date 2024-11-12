@@ -19,13 +19,17 @@ async fn create_address(
     data: Data<AppState>,
 ) -> impl Responder {
     let query = r#"
-        INSERT INTO addresses (id, street, city, state, zip_code)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, street, city, state, zip_code
+        INSERT INTO addresses (user_id, parent_id, student_id, guardian_id, street, city, state, zip_code)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, user_id, parent_id, student_id, guardian_id, street, city, state, zip_code
     "#;
 
     match sqlx::query_as::<_, AddressModel>(query)
-        .bind(Uuid::new_v4()) // Gera um novo UUID para o endereço
+        //.bind(Uuid::new_v4()) // Gera um novo UUID para o endereço
+        .bind(body.user_id)
+        .bind(body.parent_id)
+        .bind(body.student_id)
+        .bind(body.guardian_id)
         .bind(&body.street)
         .bind(&body.city)
         .bind(&body.state)
@@ -38,6 +42,10 @@ async fn create_address(
                 "status": "success",
                 "address": {
                     "id": address.id,
+                    "user_id": address.user_id,
+                    "parent_id": address.parent_id,
+                    "student_id": address.student_id,
+                    "guardian_id": address.guardian_id,
                     "street": address.street,
                     "city": address.city,
                     "state": address.state,
@@ -58,7 +66,7 @@ async fn create_address(
 
 #[get("/addresses")]
 async fn get_all_addresses(data: Data<AppState>) -> impl Responder {
-    let query = "SELECT id, street, city, state, zip_code FROM addresses ORDER BY id";
+    let query = "SELECT id, user_id, parent_id, student_id, guardian_id, street, city, state, zip_code FROM addresses ORDER BY id";
 
     match sqlx::query_as::<_, AddressModel>(query).fetch_all(&data.db).await {
         Ok(addresses) => HttpResponse::Ok().json(json!({"status": "success", "addresses": addresses})),
@@ -97,7 +105,20 @@ async fn update_address_by_id(
         Ok(_) => {
             let update_result = sqlx::query_as!(
                 AddressModel,
-                "UPDATE addresses SET street = COALESCE($1, street), city = COALESCE($2, city), state = COALESCE($3, state), zip_code = COALESCE($4, zip_code) WHERE id = $5 RETURNING *",
+                "UPDATE addresses SET 
+                    user_id = COALESCE($1, user_id),
+                    parent_id = COALESCE($2, parent_id),
+                    student_id = COALESCE($3, student_id),
+                    guardian_id = COALESCE($4, guardian_id),
+                    street = COALESCE($5, street), 
+                    city = COALESCE($6, city), 
+                    state = COALESCE($7, state), 
+                    zip_code = COALESCE($8, zip_code) 
+                WHERE id = $9 RETURNING *",
+                body.user_id.as_ref(),
+                body.parent_id.as_ref(),
+                body.student_id.as_ref(),
+                body.guardian_id.as_ref(),
                 body.street.as_ref(),
                 body.city.as_ref(),
                 body.state.as_ref(),
