@@ -12,6 +12,14 @@ pub mod phones;
 pub mod videouploads;
 pub mod videotags;
 pub mod playes;
+pub mod photos;
+pub mod documents;
+pub mod file_metadatas;
+pub mod logs;
+pub mod health;
+pub mod tasks;
+pub mod meus_videos;
+pub mod all_videos;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
@@ -28,5 +36,13 @@ pub fn config(cfg: &mut ServiceConfig) {
             .configure(phones::config_phones)
             .configure(videouploads::video_uploads_scope)
             .configure(playes::config_playes)
+            .configure(health::config_health)
+            .configure(tasks::config_tasks)
+            .configure(documents::configure_services)
+            .configure(photos::config_photos)
+            .configure(file_metadatas::config_file_metadatas)
+            .configure(logs::config_logs)
+            .configure(meus_videos::config_meus_videos)
+            .configure(all_videos::config_all_videos)
     );
 }

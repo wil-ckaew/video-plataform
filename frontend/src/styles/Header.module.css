@@ -1,0 +1,37 @@
+/* Header.module.css */
+.header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    background-color: #2d3748; /* cor de fundo do cabeçalho */
+    color: white;
+}
+
+.logoContainer {
+    margin-bottom: 1rem;
+}
+
+.menuBtn {
+    display: block;
+}
+
+.nav {
+    display: none;
+}
+
+.navOpen {
+    display: block;
+}
+
+@media (min-width: 1024px) {
+    .menuBtn {
+        display: none;
+    }
+    
+    .nav {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}

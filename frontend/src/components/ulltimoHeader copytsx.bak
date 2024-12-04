@@ -1,0 +1,61 @@
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import styles from './Header.module.css'; // Importando CSS module
+import { HiMenu, HiX } from 'react-icons/hi'; // Ícones do menu
+
+const Header: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true); // Verifica se o código está sendo executado no cliente
+  }, []);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  return (
+    <header className={styles.header}>
+      <div className={styles.logoContainer}>
+        <Image
+          src="/images/4linhas.svg"
+          alt="Logo"
+          width={120}
+          height={40}
+        />
+      </div>
+      <div className="text-center text-white mb-4">
+        <h1 className="text-2xl font-bold">
+          <span className="text-red-500">Retesp</span> - <span className="text-green-500">Projeto 4 Linhas</span>
+        </h1>
+        <h2 className="text-xl font-semibold">Desafiando Pequenos Gigantes</h2>
+      </div>
+      <button
+        onClick={toggleMenu}
+        className={`text-2xl text-white lg:hidden ${styles.menuBtn}`}
+      >
+        {isMenuOpen ? <HiX /> : <HiMenu />}
+      </button>
+      {isClient && (
+        <nav className={`${styles.nav} ${isMenuOpen ? styles.navOpen : ''}`}>
+          <ul className="flex flex-col lg:flex-row lg:space-x-4 lg:justify-center lg:items-center">
+            <li><Link href="/users/users">Users</Link></li>
+            <li><Link href="/parents/parents">Parents</Link></li>
+            <li><Link href="/documents/documents">Documents</Link></li>
+            <li><Link href="/tasks/tasks">Tasks</Link></li>
+            <li><Link href="/students/students">Students</Link></li>
+            <li><Link href="/videos/videos">Videos api</Link></li>
+            <li><Link href="/uploads/uploads">Uploads</Link></li>
+            <li><Link href="/photos/photos">Photos Api</Link></li>
+            <li><Link href="/photos">Photos</Link></li>
+            <li><Link href="/">Videos</Link></li>
+          </ul>
+        </nav>
+      )}
+    </header>
+  );
+};
+
+export default Header;

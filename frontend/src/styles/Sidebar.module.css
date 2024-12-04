@@ -1,0 +1,13 @@
+/* Sidebar.module.css */
+.sidebar {
+  width: 250px; /* Largura do Sidebar */
+  background-color: #f4f4f4; /* Cor de fundo do Sidebar */
+  padding: 1rem; /* Espaçamento interno */
+  position: relative; /* Posiciona o Sidebar corretamente */
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    display: none; /* Oculta o Sidebar em telas pequenas */
+  }
+}

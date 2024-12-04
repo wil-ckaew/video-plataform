@@ -89,6 +89,15 @@ pub struct VideoModel {
     //pub video_date: Option<NaiveDateTime>,
 }
 
+#[derive(Debug, FromRow, Deserialize, Serialize)]
+pub struct MeusVideoModel {
+    pub id: Uuid,
+    pub student_id: Uuid,
+    pub filename: String,
+    pub description: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
 #[derive(FromRow,Debug, Serialize, Deserialize)]
 pub struct VideoMediaModel {
     pub id: Uuid,
@@ -107,4 +116,49 @@ pub struct TagModel {
 pub struct VideoTagModel {
     pub video_id: Uuid,
     pub tag_id: Uuid,
+}
+
+#[derive(Debug, FromRow, Deserialize, Serialize)]
+pub struct TaskModel {
+    pub id: Uuid,
+    pub title: String,
+    pub content: String,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, FromRow, Deserialize, Serialize)]
+pub struct DocumentModel {
+    pub id: Uuid,
+    pub student_id: Uuid,  // Altere aqui de user_id para student_id
+    pub doc_type: String,
+    pub filename: String,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, FromRow, Deserialize, Serialize)]
+pub struct FileMetadataModel {
+    pub id: Uuid,
+    pub user_id: Option<Uuid>,
+    pub file_type: String,
+    pub filename: String,
+    pub description: Option<String>,
+    pub uploaded_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, FromRow, Deserialize, Serialize)]
+pub struct LogModel {
+    pub id: Uuid,
+    pub user_id: Option<Uuid>,
+    pub action: String,
+    pub description: Option<String>,
+    pub timestamp: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, FromRow, Deserialize, Serialize)]
+pub struct PhotoModel {
+    pub id: Uuid,
+    pub student_id: Uuid,
+    pub filename: String,
+    pub description: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
 }

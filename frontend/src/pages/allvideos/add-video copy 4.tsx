@@ -1,0 +1,167 @@
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import axios, { AxiosError } from 'axios';
+import Header from '../../components/Header';
+
+const AddVideoPage: React.FC = () => {
+  const router = useRouter();
+
+  // Definindo estados para cada campo
+  const [file, setFile] = useState<File | null>(null); // Arquivo do vídeo
+  const [videoPath, setVideoPath] = useState(''); // Caminho do vídeo
+  const [videoId, setVideoId] = useState(''); // ID do vídeo
+  const [status, setStatus] = useState(''); // Status do vídeo
+  const [videos, setVideos] = useState<{ id: string; title: string }[]>([]); // Lista de vídeos
+  const [loading, setLoading] = useState(false); // Estado de carregamento
+
+  // Buscar vídeos para preencher o select
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const response = await axios.get('/api/videos');
+        setVideos(response.data.videos || []);
+      } catch (error) {
+        console.error('Erro ao buscar vídeos:', error);
+      }
+    };
+    fetchVideos();
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files ? e.target.files[0] : null;
+    if (selectedFile) {
+      setFile(selectedFile);
+      setVideoPath(selectedFile.name); // Preenche a descrição com o nome do arquivo
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!file) {
+      alert("Por favor, selecione um vídeo.");
+      return;
+    }
+
+    setLoading(true);
+
+    // Envia os metadados como JSON
+    const metadata = {
+      video_id: videoId,  // O ID do vídeo
+      video_path: videoPath, // O caminho do vídeo
+      status: status,      // O status do vídeo
+    };
+
+    try {
+      // Envia os metadados como JSON para a API
+      const metadataResponse = await axios.post("http://localhost:8080/api/all_videos", metadata, {
+        headers: {
+          "Content-Type": "application/json",  // Certificando-se que os dados são enviados como JSON
+        },
+      });
+
+      console.log("Resposta da API (Metadados):", metadataResponse.data);
+      alert("Metadados gravados com sucesso!");
+
+      // Agora, envia o arquivo de vídeo após a gravação dos metadados
+      const formData = new FormData();
+      formData.append("video", file);
+      formData.append("video_id", videoId); // Envia o ID do vídeo junto
+
+      // Envia o arquivo de vídeo via FormData
+      const fileResponse = await axios.post("http://localhost:8080/api/all_videos/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Enviando o arquivo como multipart
+        },
+      });
+
+      console.log("Upload do vídeo concluído:", fileResponse.data);
+      alert('Vídeo enviado com sucesso!');
+
+      // Redireciona para a página de vídeos e recarrega os dados
+      router.push('/allvideos/allvideos');
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.error('Erro na requisição:', error.response?.data);
+        alert(`Erro ao adicionar vídeo: ${error.response?.data.message || error.message}`);
+      } else {
+        console.error('Erro desconhecido:', error);
+        alert('Erro ao adicionar vídeo: Erro desconhecido');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-screen">
+      <Header />
+      <main className="flex-1 overflow-y-auto bg-gray-100 p-4">
+        <h1 className="text-xl font-semibold mb-4">Adicionar Vídeo</h1>
+
+        {/* Formulário para selecionar vídeo */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="videoId" className="block text-gray-700">Vídeo</label>
+            <select
+              id="videoId"
+              value={videoId}
+              onChange={(e) => setVideoId(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+            >
+              <option value="">Selecione um Vídeo</option>
+              {videos.map((video) => (
+                <option key={video.id} value={video.id}>
+                  {video.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="file" className="block text-gray-700">Arquivo</label>
+            <input
+              type="file"
+              id="file"
+              onChange={handleFileChange}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="videoPath" className="block text-gray-700">Caminho do Vídeo</label>
+            <input
+              type="text"
+              id="videoPath"
+              value={videoPath}
+              onChange={(e) => setVideoPath(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+              readOnly
+            />
+          </div>
+
+          <div>
+            <label htmlFor="status" className="block text-gray-700">Status</label>
+            <input
+              type="text"
+              id="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="mt-4 bg-blue-500 text-white p-3 rounded-md"
+            disabled={loading}  // Desabilita o botão enquanto o vídeo está sendo carregado
+          >
+            {loading ? "Carregando..." : "Enviar Vídeo"}
+          </button>
+        </form>
+      </main>
+    </div>
+  );
+};
+
+export default AddVideoPage;

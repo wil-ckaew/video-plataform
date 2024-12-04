@@ -3,20 +3,93 @@ use actix_web::{
     web::{Data, Json, Query, Path, ServiceConfig},
     HttpResponse, Responder,
 };
-use serde_json::json;
 use crate::{
     models::VideoModel,
     schema::{CreateVideoSchema, UpdateVideoSchema, FilterOptions},
     AppState,
 };
+use actix_files::Files;  // Para servir arquivos estáticos
+use actix_multipart::Multipart;
+use futures_util::StreamExt;
+use tokio::fs::File as TokioFile; // Use um alias para tokio::fs::File
+use tokio::fs::{self, File}; // Importando tokio::fs para operações assíncronas
+use tokio::io::AsyncWriteExt;
+use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
+use std::path::PathBuf;
 use chrono::{Utc, NaiveDateTime};  // Importando NaiveDateTime
 use lapin::{options::BasicPublishOptions, BasicProperties, Channel};
 
 // Gera o caminho dinâmico para o thumbnail com base no ID do vídeo
 fn generate_thumbnail_path(video_id: Uuid) -> String {
     format!("/media/thumbnails/video-test/{}/thumbnail.jpg", video_id)
+}
+
+#[post("/upload")]
+async fn upload_file(mut payload: Multipart) -> impl Responder {
+    // Verifique se o diretório de uploads existe, caso contrário, crie-o
+    let uploads_dir = "./static/uploads";
+    if !fs::metadata(uploads_dir).await.is_ok() {
+        fs::create_dir_all(uploads_dir).await.expect("Failed to create uploads directory");
+    }
+
+    while let Some(field) = payload.next().await {
+        match field {
+            Ok(mut field) => {
+                // Extrair o nome original do arquivo
+                let filename = field
+                    .content_disposition()
+                    .get_filename()
+                    .map(|f| f.to_string())
+                    .unwrap_or_else(|| "default_filename".to_string());
+
+                // Defina o caminho do arquivo para salvar no diretório de uploads
+                let filepath = format!("./static/uploads/{}", filename);
+
+                // Crie o arquivo no diretório de uploads com o nome original
+                let mut f = File::create(&filepath)
+                    .await
+                    .expect("Unable to create file");
+
+                // Escreve o conteúdo do arquivo
+                while let Some(chunk) = field.next().await {
+                    match chunk {
+                        Ok(data) => {
+                            f.write_all(&data).await.expect("Unable to write data");
+                        },
+                        Err(e) => {
+                            return HttpResponse::InternalServerError().json(json!({
+                                "status": "error",
+                                "message": format!("Error reading chunk: {:?}", e)
+                            }));
+                        }
+                    }
+                }
+
+                // Gera a URL para o arquivo carregado
+                let file_url = format!("/uploads/{}", filename);
+
+                // Retorna a resposta de sucesso com a URL do arquivo
+                return HttpResponse::Ok().json(json!({
+                    "status": "success",
+                    "message": "File uploaded successfully.",
+                    "file_url": file_url
+                }));
+            }
+            Err(e) => {
+                return HttpResponse::InternalServerError().json(json!({
+                    "status": "error",
+                    "message": format!("Error reading field: {:?}", e)
+                }));
+            }
+        }
+    }
+
+    HttpResponse::Ok().json(json!({
+        "status": "success",
+        "message": "File uploaded successfully."
+    }))
 }
 
 #[post("/videos")]
@@ -291,6 +364,9 @@ pub fn config_videos(conf: &mut ServiceConfig) {
     conf.service(create_video)
        .service(get_all_videos)
        .service(get_video_by_id)
+       .service(upload_file)
        .service(update_video_by_id)
-       .service(delete_video_by_id);
+       .service(delete_video_by_id)
+       .service(Files::new("/static", "./static").show_files_listing())
+       .service(Files::new("/uploads", "./static/uploads").show_files_listing());
 }
