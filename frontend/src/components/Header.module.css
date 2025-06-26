@@ -16,11 +16,10 @@
 }
 
 .logoContainer img {
-  margin-right: 1rem; /* Espaçamento entre o logo e o texto */
-  width: 90px; /* Reduzindo o tamanho do logo */
-  height: 55px; /* Ajuste proporcional da altura */
+  margin-right: 1rem;
+  width: 90px;
+  height: 55px;
 }
-
 
 .titleContainer {
   display: flex;
@@ -29,68 +28,118 @@
 
 .menuBtn {
   cursor: pointer;
-  font-size: 1.2rem; /* Tamanho do botão "Menu" */
+  font-size: 1.2rem;
   color: white;
-  display: block;
   background: none;
   border: none;
   padding: 0.5rem 1rem;
 }
 
-/* Menu - estilizacao para telas pequenas */
+/* Menu container */
 .nav {
-  display: none; /* O menu começa oculto por padrão */
+  display: none;
   position: absolute;
   top: 100%;
   left: 0;
   width: 100%;
-  background-color: #333;
+  background-color: #222; /* Fundo mais escuro para destacar */
   z-index: 1000;
   padding: 1rem;
 }
 
 .navOpen {
-  display: block; /* O menu se torna visível quando a classe .navOpen é aplicada */
+  display: block;
 }
 
 .navList {
   list-style-type: none;
   padding: 0;
   margin: 0;
-  display: flex; /* Itens do menu ficam em uma linha */
-  flex-direction: row; /* Exibe os itens em linha */
-  justify-content: center; /* Centraliza os itens */
-  gap: 1rem; /* Adiciona espaçamento entre os itens */
+  display: flex;
+  flex-direction: column; /* Itens em coluna para seções e submenus */
+  gap: 0.75rem;
 }
 
+/* Botões das seções principais (Cadastros, Serviços, etc) */
+.navList > li > button {
+  color: white;          /* cor branca padrão */
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.2s ease;
+}
+
+.navList > li > button:hover {
+  color: #22c55e;        /* verde */
+  background-color: #444; /* fundo leve para destaque no hover */
+}
+
+/* Itens do submenu (links) */
 .navItem {
-  margin-bottom: 0; /* Remove a margem inferior */
+  margin-bottom: 0;
 }
 
 .navLink {
-  color: white;
+  color: #fff;
   text-decoration: none;
   font-size: 1.2rem;
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
 }
 
 .navLink:hover {
-  text-decoration: underline;
+  background-color: #444;
+  text-decoration: none;
 }
 
-/* Estilos para telas grandes */
+/* Botão de voltar */
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  color: #ccc;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.backButton:hover {
+  color: #fff;
+}
+
+/* Título da seção ativa */
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #eee;
+  margin-bottom: 0.5rem;
+  padding-left: 0.25rem;
+}
+
+/* Estilos para telas maiores */
 @media (min-width: 768px) {
   .menuBtn {
-    display: inline-block; /* O botão "Menu" (com texto "Menu") será exibido em telas grandes */
+    display: inline-block;
     text-align: right;
     padding: 0.5rem 1rem;
   }
 
   .nav {
-    display: none; /* O menu fica oculto em telas grandes, até ser clicado */
+    display: none;
   }
 
   .navOpen {
-    display: block; /* O menu aparece quando "Menu" for clicado */
+    display: block;
     position: absolute;
     top: 100%;
     left: 0;
@@ -100,17 +149,9 @@
   }
 
   .navList {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    display: flex; /* Exibe os itens em linha */
-    flex-direction: row; /* Alinha os itens horizontalmente */
-    justify-content: center; /* Centraliza os itens horizontalmente */
-    gap: 1rem; /* Adiciona um pequeno espaçamento entre os itens */
-  }
-
-  .navItem {
-    margin-bottom: 0; /* Remove a margem inferior em telas grandes */
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
   }
 
   .navLink {
@@ -122,3 +163,4 @@
     text-decoration: underline;
   }
 }
+

@@ -3,23 +3,22 @@ use actix_web::{
     web::{Data, Json, Path, ServiceConfig, Query},
     HttpResponse, Responder,
 };
-use actix_multipart::Multipart; // Importação correta aqui
+use actix_multipart::Multipart;
 use futures_util::StreamExt;
-use tokio::fs::File; // Use o tipo correto
+use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 use std::path::PathBuf;
 use std::fs;
-
 use crate::{models::DocumentModel, schema::{CreateDocumentSchema, UpdateDocumentSchema, FilterOptions}, AppState};
 
-const UPLOAD_DIR: &str = "uploads";
+const UPLOAD_DIR: &str = "static/uploads";
 
 fn create_upload_dir() {
     if !PathBuf::from(UPLOAD_DIR).exists() {
-        fs::create_dir(UPLOAD_DIR).unwrap();
+        fs::create_dir_all(UPLOAD_DIR).unwrap();
     }
 }
 
@@ -27,34 +26,36 @@ fn create_upload_dir() {
 async fn upload_document(mut payload: Multipart, _data: Data<AppState>) -> impl Responder {
     create_upload_dir();
 
+    let mut filename = String::new();
     while let Some(field) = payload.next().await {
         match field {
             Ok(mut field) => {
-                let filename = field.content_disposition().get_filename()
-                    .map(|f| f.to_string())
-                    .unwrap_or_else(|| "default_filename".to_string());
+                if let Some(fname) = field.content_disposition().get_filename() {
+                    filename = fname.to_string();
+                    let filepath = format!("{}/{}", UPLOAD_DIR, filename);
 
-                let filepath = format!("{}/{}", UPLOAD_DIR, filename);
-                let mut f = File::create(&filepath).await.expect("Unable to create file");
-
-                while let Some(chunk) = field.next().await {
-                    match chunk {
-                        Ok(data) => {
-                            f.write_all(&data).await.expect("Unable to write data");
-                        },
-                        Err(e) => {
-                            return HttpResponse::InternalServerError().json(json!({"status": "error", "message": format!("Error reading chunk: {:?}", e)}));
+                    if let Ok(mut f) = File::create(&filepath).await {
+                        while let Some(chunk) = field.next().await {
+                            if let Ok(data) = chunk {
+                                if let Err(e) = f.write_all(&data).await {
+                                    return HttpResponse::InternalServerError().json(json!({"status": "error", "message": format!("Write error: {:?}", e)}));
+                                }
+                            } else {
+                                return HttpResponse::InternalServerError().json(json!({"status": "error", "message": "Failed to read chunk"}));
+                            }
                         }
+                    } else {
+                        return HttpResponse::InternalServerError().json(json!({"status": "error", "message": "Failed to create file"}));
                     }
                 }
-            },
+            }
             Err(e) => {
                 return HttpResponse::InternalServerError().json(json!({"status": "error", "message": format!("Error reading field: {:?}", e)}));
             }
         }
     }
 
-    HttpResponse::Ok().json(json!({"status": "success", "message": "File uploaded successfully."}))
+    HttpResponse::Ok().json(json!({"status": "success", "message": "File uploaded successfully", "filename": filename}))
 }
 
 #[get("/healthchecker")]
@@ -258,9 +259,7 @@ async fn update_document_by_id(
     }
 }
 
-//pub fn configure_services(cfg: &mut ServiceConfig) {
-   // cfg.service(upload_document)
-pub fn configure_services(conf: &mut ServiceConfig) {
+pub fn config_documents(conf: &mut ServiceConfig) {
     conf.service(upload_document)
         .service(health_checker)
         .service(create_document)

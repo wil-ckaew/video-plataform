@@ -1,293 +1,370 @@
 // src/schema.rs
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 
-/// Estrutura para representar os dados necessários ao criar um novo usuário
-#[derive(Deserialize)]
+/// USERS
+#[derive(Debug, Deserialize)]
 pub struct CreateUserSchema {
     pub username: String,
-    pub password_hash: String, // Altere para password
+    pub password_hash: String,  // ou 'password' se for texto puro (veja nota)
     pub role: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct UpdateUserSchema {
     pub username: Option<String>,
-    pub password_hash: Option<String>, // Altere para password
+    pub password_hash: Option<String>,
     pub role: Option<String>,
 }
 
-/// Estrutura para criar um novo endereço
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CreateAddressSchema {
-    pub user_id: Option<Uuid>, 
-    pub parent_id: Option<Uuid>,
-    pub student_id: Option<Uuid>,  
-    pub guardian_id: Option<Uuid>, 
-    pub street: String,                 // Rua do endereço
-    pub city: String,                   // Cidade do endereço
-    pub state: String,                  // Estado do endereço
-    pub zip_code: String,               // Código postal do endereço
-}
 
-/// Estrutura para atualizar um endereço existente
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UpdateAddressSchema {
-    pub user_id: Option<Uuid>, 
-    pub parent_id: Option<Uuid>,
-    pub student_id: Option<Uuid>,  
-    pub guardian_id: Option<Uuid>, 
-    pub street: Option<String>,         // Rua opcional do endereço
-    pub city: Option<String>,           // Cidade opcional do endereço
-    pub state: Option<String>,          // Estado opcional do endereço
-    pub zip_code: Option<String>,       // Código postal opcional do endereço
-}
-
-/// Estrutura para criar um novo responsável
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CreateGuardianSchema {
-    pub user_id: Option<Uuid>,                 // ID do usuário associado
-    pub name: String,                   // Nome do responsável
-    pub relationship: String,           // Relacionamento com o aluno
-}
-
-/// Estrutura para atualizar um responsável existente
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UpdateGuardianSchema {
-    pub user_id: Option<Uuid>,
-    pub name: Option<String>,           // Nome opcional do responsável
-    pub relationship: Option<String>,   // Relacionamento opcional com o aluno
-}
-
-/// Estrutura para representar os dados necessários ao criar um novo pai
+/// PARENTS
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateParentSchema {
-    pub user_id: Option<Uuid>,                 // ID do usuário associado
-    pub name: String,                   // Nome do pai
-    pub email: String,                  // Email do pai
+    pub user_id: Option<Uuid>,
+    pub name: String,
+    pub email: String,
 }
 
-/// Estrutura para representar os dados necessários ao atualizar um pai existente
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateParentSchema {
-    pub user_id: Option<Uuid>, // Ensure this field is present
+    pub user_id: Option<Uuid>,
     pub name: Option<String>,
     pub email: Option<String>,
 }
 
-/// Estrutura para criar um novo telefone
+/// GUARDIANS
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateGuardianSchema {
+    pub user_id: Option<Uuid>,
+    pub name: String,
+    pub relationship: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateGuardianSchema {
+    pub user_id: Option<Uuid>,
+    pub name: Option<String>,
+    pub relationship: Option<String>,
+}
+
+/// STUDENTS
+#[derive(Debug, Deserialize)]
+pub struct CreateStudentSchema {
+    pub user_id: Uuid,
+    pub name: String,
+    pub email: String,
+    pub age: i32,
+    pub birth_date: Option<NaiveDate>,
+    pub shirt_size: Option<String>,
+    pub parent_id: Option<Uuid>,
+    pub group_id: Option<Uuid>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateStudentSchema {
+    pub user_id: Option<Uuid>,
+    pub name: Option<String>,
+    pub email: Option<String>,
+    pub age: Option<i32>,
+    pub birth_date: Option<NaiveDate>,
+    pub shirt_size: Option<String>,
+    pub parent_id: Option<Uuid>,
+    pub group_id: Option<Uuid>,
+}
+
+/// ADDRESSES
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateAddressSchema {
+    pub user_id: Option<Uuid>,
+    pub parent_id: Option<Uuid>,
+    pub student_id: Option<Uuid>,
+    pub guardian_id: Option<Uuid>,
+    pub street: String,
+    pub city: String,
+    pub state: String,
+    pub zip_code: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateAddressSchema {
+    pub user_id: Option<Uuid>,
+    pub parent_id: Option<Uuid>,
+    pub student_id: Option<Uuid>,
+    pub guardian_id: Option<Uuid>,
+    pub street: Option<String>,
+    pub city: Option<String>,
+    pub state: Option<String>,
+    pub zip_code: Option<String>,
+}
+
+/// PHONES
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreatePhoneSchema {
-    pub user_id: Option<Uuid>,         // ID do usuário associado ao telefone (opcional)
-    pub parent_id: Option<Uuid>,       // ID do parente associado ao telefone (opcional)
-    pub student_id: Option<Uuid>,       // ID do aluno associado ao telefone (opcional)
-    pub guardian_id: Option<Uuid>,     // ID do responsável associado ao telefone (opcional)
-    pub number: String,                 // Número de telefone
-    pub phone_type: Option<String>,         // Tipo de telefone
+    pub user_id: Option<Uuid>,
+    pub parent_id: Option<Uuid>,
+    pub student_id: Option<Uuid>,
+    pub guardian_id: Option<Uuid>,
+    pub number: String,
+    pub phone_type: Option<String>,
 }
 
-/// Estrutura para atualizar um telefone existente
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UpdatePhoneSchema {
     pub user_id: Option<Uuid>,
-    pub student_id: Option<Uuid>,
     pub parent_id: Option<Uuid>,
+    pub student_id: Option<Uuid>,
     pub guardian_id: Option<Uuid>,
-    pub number: Option<String>,     // String obrigatório
-    pub phone_type: Option<String>,  // String obrigatório
+    pub number: Option<String>,    // deve ser Option<String>
+    pub phone_type: Option<String>,
 }
 
-
-/// Estrutura para representar os dados necessários ao criar um novo aluno
+/// ATTENDANCES
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CreateStudentSchema {
-    pub user_id: Option<Uuid>,                // ID do usuário associado
-    pub name: String,                   // Nome do aluno
-    pub email: String,                  // Email do aluno
-    pub parent_id: Option<Uuid>,        // ID do pai associado (opcional)
+pub struct CreateAttendanceSchema {
+    pub student_id: Uuid,
+    pub date: NaiveDate,
+    pub status: String,
+    pub notes: Option<String>,
 }
 
-/// Estrutura para representar os dados necessários ao atualizar um aluno existente
 #[derive(Debug, Serialize, Deserialize)]
-pub struct UpdateStudentSchema {
-    pub user_id: Option<Uuid>, 
-    pub name: Option<String>,           // Nome do aluno (opcional para atualização)
-    pub email: Option<String>,          // Email do aluno (opcional para atualização)
-    pub parent_id: Option<Uuid>,        // ID do pai associado (opcional para atualização)
+pub struct UpdateAttendanceSchema {
+    pub student_id: Option<Uuid>,
+    pub date: Option<NaiveDate>,
+    pub status: Option<String>,
+    pub notes: Option<String>,  // <-- adicione essa linha
 }
 
-/// Estrutura para representar os dados necessários ao criar uma nova tag
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CreateTagSchema {
-    pub name: String,                   // Nome da tag
-}
-
-/// Estrutura para representar os dados necessários ao atualizar uma tag existente
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UpdateTagSchema {
-    pub name: Option<String>,           // Nome da tag (opcional para atualização)
-}
-/*
-/// Estrutura para criar um novo vídeo
+/// VIDEOS
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateVideoSchema {
     pub title: String,
     pub description: Option<String>,
     pub thumbnail_path: Option<String>,
-    pub slug: String,
+    pub slug: Option<String>,
     pub published_at: Option<NaiveDateTime>,
     pub is_published: Option<bool>,
     pub num_likes: Option<i32>,
     pub num_views: Option<i32>,
-    pub author_id: Uuid,
-   // pub video_date: Option<NaiveDateTime>,
+    pub author_id: Option<Uuid>,
 }
-   */
-   #[derive(Debug, Serialize, Deserialize)]
-   pub struct CreateVideoSchema {
-       pub title: String,
-       pub description: Option<String>,        // Alterado para opcional
-       pub thumbnail_path: Option<String>,     // Alterado para opcional
-       pub slug: Option<String>,               // Alterado para opcional
-       pub published_at: Option<NaiveDateTime>,// Alterado para opcional
-       pub is_published: Option<bool>,         // Alterado para opcional
-       pub num_likes: Option<i32>,             // Alterado para opcional
-       pub num_views: Option<i32>,             // Alterado para opcional
-       pub author_id: Option<Uuid>,            // Já era opcional
-   }
 
-/// Estrutura para atualizar um vídeo existente
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateVideoSchema {
-    pub title: Option<String>,          // Título do vídeo
-    pub description: Option<String>,    // Descrição opcional
-    pub thumbnail_path: Option<String>, // Caminho para a miniatura
-    pub slug: Option<String>,           // Slug opcional
-    pub published_at: Option<NaiveDateTime>, // Data de publicação
-    pub is_published: Option<bool>,     // Status de publicação
-    pub author_id: Option<Uuid>,        // ID do autor
-    pub num_likes: Option<i32>,         // Número de likes
-    pub num_views: Option<i32>,         // Número de visualizações
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub thumbnail_path: Option<String>,
+    pub slug: Option<String>,
+    pub published_at: Option<NaiveDateTime>,
+    pub is_published: Option<bool>,
+    pub num_likes: Option<i32>,
+    pub num_views: Option<i32>,
+    pub author_id: Option<Uuid>,
 }
 
-/// Estrutura para criação de mídia de vídeo
+/// VIDEO MEDIA
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateVideoMediaSchema {
     pub video_id: Uuid,
     pub video_path: String,
-    pub status: String,                 // Status do processamento/transcodificação
+    pub status: String,
 }
 
-/// Estrutura para atualização de mídia de vídeo
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateVideoMediaSchema {
-    pub video_path: Option<String>,
     pub video_id: Option<Uuid>,
+    pub video_path: Option<String>,
     pub status: Option<String>,
 }
 
-/// Estrutura para criar uma associação entre vídeo e tag
+/// TAGS
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateTagSchema {
+    pub name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateTagSchema {
+    pub name: Option<String>,
+}
+
+/// VIDEO TAGS
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateVideoTagSchema {
     pub video_id: Uuid,
     pub tag_id: Uuid,
 }
 
-/// Estrutura para atualizar a associação entre vídeo e tag
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateVideoTagSchema {
     pub video_id: Option<Uuid>,
     pub tag_id: Option<Uuid>,
 }
 
-#[derive(Deserialize)]
-pub struct CreateMeusVideoSchema {
-    pub student_id: Uuid,
-    pub filename: String,
-    pub description: String,
+/// GROUPS
+#[derive(serde::Deserialize)]
+pub struct CreateGroupSchema {
+    pub name: String,
+    pub description: Option<String>,
 }
 
-#[derive(Deserialize)]
-pub struct UpdateMeusVideoSchema {
+#[derive(serde::Deserialize)]
+pub struct UpdateGroupSchema {
+    pub name: Option<String>,
+    pub description: Option<String>,
+}
+
+/// WARNINGS
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateWarningSchema {
+    pub student_id: Uuid,
+    pub reason: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateWarningSchema {
     pub student_id: Option<Uuid>,
+    pub reason: Option<String>,
+}
+
+/// CHAT ROOMS
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateChatRoomSchema {
+    pub name: Option<String>,
+    pub is_group: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateChatRoomSchema {
+    pub name: Option<String>,
+    pub is_group: Option<bool>,
+}
+
+/// MESSAGES
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateMessageSchema {
+    pub room_id: Uuid,
+    pub sender_id: Uuid,
+    pub content: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateMessageSchema {
+    pub content: Option<String>,
+}
+
+/// SCHEDULE CHANGES
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateScheduleChangeSchema {
+    pub group_id: Option<Uuid>,
+    pub old_date: Option<NaiveDateTime>,
+    pub new_date: Option<NaiveDateTime>,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateScheduleChangeSchema {
+    pub group_id: Option<Uuid>,
+    pub old_date: Option<NaiveDateTime>,
+    pub new_date: Option<NaiveDateTime>,
+    pub reason: Option<String>,
+}
+
+/// DOCUMENTS
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateDocumentSchema {
+    pub student_id: Uuid,
+    pub doc_type: String,
+    pub filename: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateDocumentSchema {
+    pub student_id: Option<Uuid>,
+    pub doc_type: Option<String>,
+    pub filename: Option<String>,
+}
+
+/// FILE METADATA
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateFileMetadataSchema {
+    pub user_id: Option<Uuid>,
+    pub file_type: String,
+    pub filename: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateFileMetadataSchema {
+    pub user_id: Option<Uuid>,
+    pub file_type: Option<String>,
     pub filename: Option<String>,
     pub description: Option<String>,
 }
 
-/// Estrutura para opções de filtro
+/// TASKS
 #[derive(Debug, Serialize, Deserialize)]
-pub struct FilterOptions {
-    pub page: Option<usize>,
-    pub limit: Option<usize>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct CreateTaskSchema {
     pub title: String,
     pub content: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CreateDocumentSchema {
-    pub student_id: Uuid, // Altere aqui de user_id para student_id
-    pub doc_type: String,
-    pub filename: String, // Adicionado para corresponder à criação de documentos
-}
-
-#[derive(Deserialize)]
-pub struct CreatePhotoSchema {
-    pub student_id: Uuid,
-    pub filename: String,
-    pub description: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct CreateFileMetadataSchema {
-    pub user_id: Uuid, // Pode ser opcional se o arquivo não estiver associado a um usuário
-    pub file_type: String,     // Deve ser 'video' ou 'photo'
-    pub filename: String,
-    pub description: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct CreateLogSchema {
-    pub user_id: Uuid, // Pode ser opcional se o arquivo não estiver associado a um usuário
-    pub action: String,     // Deve ser 'video' ou 'photo'
-    pub description: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateTaskSchema {
     pub title: Option<String>,
     pub content: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)] // Adicionado Serialize para consistência
-pub struct UpdateDocumentSchema {
-    pub student_id: Option<Uuid>, // Altere aqui de user_id para student_id
-    pub doc_type: Option<String>,
-    pub filename: Option<String>, // Adicionado para permitir atualização do filename
+/// PHOTOS
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreatePhotoSchema {
+    pub student_id: Uuid,
+    pub filename: String,
+    pub description: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UpdatePhotoSchema {
     pub student_id: Option<Uuid>,
     pub filename: Option<String>,
     pub description: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct UpdateFileMetadataSchema {
-    pub user_id: Option<Uuid>, // Pode ser opcional se o arquivo não estiver associado a um usuário
-    pub file_type: Option<String>,     // Deve ser 'video' ou 'photo'
+/// MEUS VÍDEOS
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateMeusVideoSchema {
+    pub student_id: Uuid,
+    pub filename: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateMeusVideoSchema {
+    pub student_id: Option<Uuid>,
     pub filename: Option<String>,
     pub description: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+/// LOGS
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateLogSchema {
+    pub user_id: Option<Uuid>,
+    pub action: String,
+    pub description: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateLogSchema {
-    pub user_id: Option<Uuid>, // Pode ser opcional se o arquivo não estiver associado a um usuário
-    pub action: Option<String>,     // Deve ser 'video' ou 'photo'
+    pub user_id: Option<Uuid>,
+    pub action: Option<String>,
     pub description: Option<String>,
+}
+
+/// FILTROS
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FilterOptions {
+    pub limit: Option<usize>,
+    pub page: Option<usize>,
 }

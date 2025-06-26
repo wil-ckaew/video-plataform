@@ -123,72 +123,61 @@ async fn get_phone_by_id(
     }
 }
 
-/// Função para atualizar um telefone existente
 #[patch("/phones/{id}")]
 async fn update_phone_by_id(
     path: Path<Uuid>,
+    data: Data<AppState>,
     body: Json<UpdatePhoneSchema>,
-    data: Data<AppState>
 ) -> impl Responder {
     let phone_id = path.into_inner();
 
-    match sqlx::query_as!(
-        PhoneModel,
-        "SELECT * FROM phones WHERE id = $1",
-        phone_id
-    )
-    .fetch_one(&data.db)
-    .await
-    {
-        Ok(phone) => {
-            let update_result = sqlx::query_as!(
-                PhoneModel,
-                "UPDATE phones SET 
-                    user_id = COALESCE($1, user_id), 
-                    student_id = COALESCE($2, student_id), 
-                    parent_id = COALESCE($3, parent_id),
-                    guardian_id = COALESCE($4, guardian_id),
-                    number = COALESCE($5, number),
-                    phone_type = COALESCE($6, phone_type)
-                WHERE id = $7 RETURNING *",
-                body.user_id.as_ref(),
-                body.student_id.as_ref(),
-                body.parent_id.as_ref(),
-                body.guardian_id.as_ref(),
-                body.number.as_ref(),
-                body.phone_type.as_ref(),
-                phone_id
-                
-            )
-            .fetch_one(&data.db)
-            .await;
-
-            match update_result {
-                Ok(updated_phone) => {
-                    let response = json!({
-                        "status": "success",
-                        "phone": updated_phone
-                    });
-                    HttpResponse::Ok().json(response)
-                }
-                Err(update_error) => {
-                    let response = json!({
-                        "status": "error",
-                        "message": format!("Failed to update phone: {:?}", update_error)
-                    });
-                    HttpResponse::InternalServerError().json(response)
-                }
-            }
-        }
-        Err(fetch_error) => {
-            let response = json!({
+    let number = match &body.number {
+        Some(n) if !n.trim().is_empty() => n.trim().to_owned(),
+        _ => {
+            return HttpResponse::BadRequest().json(json!({
                 "status": "error",
-                "message": format!("Phone not found: {:?}", fetch_error)
-            });
-            HttpResponse::NotFound().json(response)
+                "message": "O campo 'number' é obrigatório e não pode ser vazio."
+            }));
+        }
+    };
+
+    let query = r#"
+        UPDATE phones SET
+            user_id = COALESCE($1, user_id),
+            parent_id = COALESCE($2, parent_id),
+            student_id = COALESCE($3, student_id),
+            guardian_id = COALESCE($4, guardian_id),
+            number = $5,
+            phone_type = COALESCE($6, phone_type)
+        WHERE id = $7
+        RETURNING id, user_id, student_id, parent_id, guardian_id, number, phone_type
+    "#;
+
+    match sqlx::query_as::<_, PhoneModel>(query)
+        .bind(body.user_id)
+        .bind(body.parent_id)
+        .bind(body.student_id)
+        .bind(body.guardian_id)
+        .bind(number)
+        .bind(body.phone_type.as_deref())
+        .bind(phone_id)
+        .fetch_one(&data.db)
+        .await
+    {
+        Ok(phone) => HttpResponse::Ok().json(json!({
+            "status": "success",
+            "phone": phone
+        })),
+        Err(err) => {
+            eprintln!("Erro ao atualizar telefone: {:?}", err);
+            HttpResponse::InternalServerError().json(json!({
+                "status": "error",
+                "message": format!("Erro ao atualizar telefone: {}", err)
+            }))
         }
     }
 }
+
 /*
 /// Função para atualizar um telefone existente
 #[patch("/phones/{id}")]

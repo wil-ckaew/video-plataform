@@ -71,8 +71,9 @@ async fn main() -> std::io::Result<()> {
             )
             .service(Files::new("/thumbnails", "./media/thumbnails").show_files_listing()) // Servindo arquivos de thumbnails
             .service(Files::new("/uploads", "./static/uploads").show_files_listing()) // Serve arquivos da pasta uploads
-            .service(Files::new("/static", "./static").show_files_listing()) // Serve arquivos estáticos
-    })
+         //   .service(Files::new("/static", "./static").show_files_listing()) // Serve arquivos estáticos
+           // .service(Files::new("/uploads", "./uploads").show_files_listing()) // Servir arquivos estáticos do diretório de uploads
+        })
     .bind("127.0.0.1:8080")? // Bind the server to port 8080
     .run()
     .await

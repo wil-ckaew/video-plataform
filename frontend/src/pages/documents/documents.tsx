@@ -22,39 +22,38 @@ const DocumentsPage: React.FC = () => {
   const router = useRouter();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedStudent, setSelectedStudent] = useState<string>(''); // Novo estado para o estudante selecionado
+  const [selectedStudent, setSelectedStudent] = useState<string>('');
 
   useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        const response = await api.get('/api/documents');
-        setDocuments(response.data.documents || []);
-        setError(null);
-      } catch (error) {
-        if (error instanceof AxiosError) {
-          setError(`Error fetching documents: ${error.message}`);
-        } else {
-          setError('Unknown error occurred');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchData();
+  }, [selectedStudent]);
 
-    const fetchStudents = async () => {
-      try {
-        const response = await api.get('/api/students');
-        setStudents(response.data.students || []);
-      } catch (error) {
-        console.error('Error fetching students:', error);
-      }
-    };
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
 
-    fetchDocuments();
-    fetchStudents();
-  }, []);
+    try {
+      // Fetch documents
+      const docResponse = await api.get('/api/documents', {
+        params: selectedStudent ? { student_id: selectedStudent } : {},
+      });
+      setDocuments(docResponse.data.documents || []);
+
+      // Fetch students
+      const studentResponse = await api.get('/api/students');
+      setStudents(studentResponse.data.students || []);
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        setError(`Error loading data: ${err.message}`);
+      } else {
+        setError('Unexpected error occurred while fetching data.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddDocument = () => {
     router.push('/documents/add-document');
@@ -68,14 +67,10 @@ const DocumentsPage: React.FC = () => {
     if (confirm('Are you sure you want to delete this document?')) {
       try {
         await api.delete(`/api/documents/${id}`);
-        setDocuments(documents.filter(document => document.id !== id));
+        setDocuments((prevDocs) => prevDocs.filter((doc) => doc.id !== id));
         alert('Document deleted successfully');
-      } catch (error) {
-        if (error instanceof AxiosError) {
-          alert(`Error deleting document: ${error.message}`);
-        } else {
-          alert('Error deleting document: Unknown error');
-        }
+      } catch (err) {
+        alert('Failed to delete the document. Please try again.');
       }
     }
   };
@@ -89,14 +84,16 @@ const DocumentsPage: React.FC = () => {
     setSelectedStudent(e.target.value);
   };
 
-  const studentMap = students.reduce((map, student) => {
-    map[student.id] = student.name;
-    return map;
-  }, {} as Record<string, string>);
+  const studentMap = students.reduce(
+    (map, student) => {
+      map[student.id] = student.name;
+      return map;
+    },
+    {} as Record<string, string>
+  );
 
-  // Filtra os documentos com base no estudante selecionado
   const filteredDocuments = selectedStudent
-    ? documents.filter(doc => doc.student_id === selectedStudent)
+    ? documents.filter((doc) => doc.student_id === selectedStudent)
     : documents;
 
   return (
@@ -104,15 +101,20 @@ const DocumentsPage: React.FC = () => {
       <Header />
       <main className="flex-1 overflow-y-auto bg-gray-100 p-4">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-gray-800 font-semibold">Documentos</p>
-          <button onClick={handleAddDocument} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+          <h1 className="text-xl font-bold text-gray-800">Documents</h1>
+          <button
+            onClick={handleAddDocument}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          >
             Add Document
           </button>
         </div>
-        
-        {/* Select para escolher o estudante */}
+
+        {/* Select Student */}
         <div className="mb-4">
-          <label htmlFor="studentSelect" className="block text-gray-700">Select Student:</label>
+          <label htmlFor="studentSelect" className="block text-gray-700 font-medium mb-2">
+            Filter by Student:
+          </label>
           <select
             id="studentSelect"
             value={selectedStudent}
@@ -120,7 +122,7 @@ const DocumentsPage: React.FC = () => {
             className="w-full p-2 border border-gray-300 rounded"
           >
             <option value="">All Students</option>
-            {students.map(student => (
+            {students.map((student) => (
               <option key={student.id} value={student.id}>
                 {student.name}
               </option>
@@ -135,17 +137,15 @@ const DocumentsPage: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {filteredDocuments.length > 0 ? (
-              filteredDocuments.map((document) => (
-                document && (
-                  <DocumentCardComponent
-                    key={document.id}
-                    document={document}
-                    name={studentMap[document.student_id] || 'Unknown'}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onView={() => handleView(document.filename)}
-                  />
-                )
+              filteredDocuments.map((doc) => (
+                <DocumentCardComponent
+                  key={doc.id}
+                  document={doc}
+                  name={studentMap[doc.student_id] || 'Unknown'}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onView={() => handleView(doc.filename)}
+                />
               ))
             ) : (
               <p className="text-center text-gray-600">No documents available</p>

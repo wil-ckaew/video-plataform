@@ -1,5 +1,8 @@
+//backend/src/services/users.rs
 use actix_web::{
-    get, post, delete, patch, web::{Data, Json, scope, Query, Path, ServiceConfig}, HttpResponse, Responder,
+    get, post, delete, patch,
+    web::{Data, Json, Query, Path, ServiceConfig},
+    HttpResponse, Responder,
 };
 use serde_json::json;
 use crate::{
@@ -7,7 +10,6 @@ use crate::{
     schema::{CreateUserSchema, UpdateUserSchema, FilterOptions},
     AppState,
 };
-use sqlx::PgPool;
 use uuid::Uuid;
 
 /// Endpoint para criar um novo usuário
@@ -62,7 +64,12 @@ pub async fn get_all_users(
 
     match sqlx::query_as!(
         UserModel,
-        "SELECT * FROM users ORDER BY id LIMIT $1 OFFSET $2",
+        r#"
+        SELECT id, username, password_hash, role, users_date
+        FROM users
+        ORDER BY id
+        LIMIT $1 OFFSET $2
+        "#,
         limit as i32,
         offset as i32
     )
@@ -96,7 +103,11 @@ async fn get_user_by_id(
 
     match sqlx::query_as!(
         UserModel,
-        "SELECT * FROM users WHERE id = $1",
+        r#"
+        SELECT id, username, password_hash, role, users_date
+        FROM users
+        WHERE id = $1
+        "#,
         user_id
     )
     .fetch_one(&data.db)
@@ -128,9 +139,14 @@ async fn update_user_by_id(
 ) -> impl Responder {
     let user_id = path.into_inner();
 
+    // Verifica se usuário existe
     match sqlx::query_as!(
         UserModel,
-        "SELECT * FROM users WHERE id = $1",
+        r#"
+        SELECT id, username, password_hash, role, users_date
+        FROM users
+        WHERE id = $1
+        "#,
         user_id
     )
     .fetch_one(&data.db)

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import Header from '../../components/Header';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
 // Importa ReactPlayer dinamicamente com SSR desativado
@@ -21,7 +20,6 @@ const VideosPage: React.FC = () => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
   const [meusVideos, setVideos] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,6 +140,7 @@ const VideosPage: React.FC = () => {
                   <video
                     className="w-full h-full object-cover" // Altura ajustada para ocupar todo o painel
                     controls
+                    autoPlay // Isso faz com que o vídeo comece a tocar automaticamente
                     src={getVideoUrl(selectedVideo.filename)}
                   />
                 )}
@@ -156,7 +155,38 @@ const VideosPage: React.FC = () => {
                   &#8592;
                 </button>
 
-                {/* Botões Adicionar e Editar */}
+                {/* Botão Próximo */}
+                <button
+                  onClick={handleNextVideo}
+                  className="bg-gray-500 text-white p-3 rounded-full"
+                  disabled={!selectedVideo || meusVideos.findIndex((video) => video.id === selectedVideo.id) === meusVideos.length - 1}
+                >
+                  &#8594;
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="text-center text-gray-600">Selecione um vídeo para assistir.</p>
+          )}
+        </div>
+
+        {/* Painel direito (lista de vídeos com miniaturas e botões de ação) */}
+        <div className="flex-1 flex flex-col overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-md p-4 ml-4">
+          <div className="flex items-center justify-between mb-4">
+            {/* Container para Label, Botões Adicionar/Editar e Botões de Navegação */}
+            <div className="flex items-center justify-between w-full">
+              <label className="text-gray-800 font-semibold text-xl flex-grow">Vídeos</label>
+              
+              {/* Botões Adicionar/Editar entre os botões de navegação */}
+              <div className="flex justify-between items-center w-1/2 space-x-4">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={page === 1}
+                  className="bg-gray-500 text-white p-3 rounded-full"
+                >
+                  &#8592;
+                </button>
+                
                 <div className="flex space-x-4">
                   <button
                     onClick={handleAddClick}
@@ -174,52 +204,31 @@ const VideosPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Botão Próximo */}
                 <button
-                  onClick={handleNextVideo}
+                  onClick={handleNextPage}
                   className="bg-gray-500 text-white p-3 rounded-full"
-                  disabled={!selectedVideo || meusVideos.findIndex((video) => video.id === selectedVideo.id) === meusVideos.length - 1}
                 >
                   &#8594;
                 </button>
               </div>
-            </>
-          ) : (
-            <p className="text-center text-gray-600">Selecione um vídeo para assistir.</p>
-          )}
-        </div>
-
-        {/* Painel direito (lista de vídeos com miniaturas) */}
-        <div className="flex-1 flex flex-col overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-md p-4 ml-4">
-          <div className="flex items-center justify-between mb-4">
-            <label className="text-gray-800 font-semibold text-xl">Vídeos</label>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handlePrevPage}
-                disabled={page === 1}
-                className="bg-gray-500 text-white p-3 rounded-full"
-              >
-                &#8592;
-              </button>
-              <button
-                onClick={handleNextPage}
-                className="bg-gray-500 text-white p-3 rounded-full"
-              >
-                &#8594;
-              </button>
             </div>
           </div>
+
+          {/* Lista de vídeos */}
           <div className="grid grid-cols-3 gap-4">
             {meusVideos.map((video) => (
               <div
                 key={video.id}
-                className="cursor-pointer flex flex-col items-center space-y-2"
+                className={`cursor-pointer flex flex-col items-center space-y-2 ${
+                  selectedVideo?.id === video.id ? 'border-4 border-blue-500' : ''
+                }`} // Adiciona borda para destacar o vídeo selecionado
                 onClick={() => handleVideoClick(video)}
               >
                 <div className="w-full h-24 overflow-hidden bg-gray-300 rounded-lg">
                   <ReactPlayer
                     url={getVideoUrl(video.filename)}
                     controls
+                    playing={selectedVideo?.id === video.id}  // Inicia a reprodução automaticamente
                     width="100%"
                     height="100%"
                     style={{ maxWidth: '100%' }}
@@ -227,6 +236,9 @@ const VideosPage: React.FC = () => {
                 </div>
                 <div className="text-center">
                   <p className="text-xs">{video.description}</p>
+                  {selectedVideo?.id === video.id && (
+                    <span className="text-sm text-white bg-blue-500 px-2 py-1 rounded-full">Em Destaque</span> // Label de destaque
+                  )}
                 </div>
               </div>
             ))}

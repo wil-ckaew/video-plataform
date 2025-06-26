@@ -23,7 +23,7 @@ const HomePage = () => {
       <p className={styles.paragraph}>
         ......Desafiando pequenos Gigantes......
       </p>
-      <Link href="/allvideos/allvideos">
+      <Link href="/meus_videos/videos">
         <button className={styles.button}>Clique Aqui!</button>
       </Link>
     </main>

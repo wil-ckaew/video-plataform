@@ -7,44 +7,11 @@ CREATE TABLE users (
     users_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de Vídeos
-CREATE TABLE videos (
+-- Tabela de Grupos (Turmas)
+CREATE TABLE groups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(255) NOT NULL,
+    name VARCHAR(50) NOT NULL CHECK (name IN ('pequenos', 'medios', 'grandes')),
     description TEXT,
-    thumbnail_path VARCHAR(255),
-    slug VARCHAR(100) UNIQUE,
-    published_at TIMESTAMP,
-    is_published BOOLEAN DEFAULT FALSE,
-    num_likes INTEGER DEFAULT 0,
-    num_views INTEGER DEFAULT 0,
-    author_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    video_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create meusvideos table
-CREATE TABLE IF NOT EXISTS meusvideos (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-    filename TEXT NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create tasks table
-CREATE TABLE IF NOT EXISTS tasks (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create documents table
-CREATE TABLE IF NOT EXISTS documents (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    student_id UUID NOT NULL,
-    doc_type TEXT NOT NULL,
-    filename TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -63,21 +30,15 @@ CREATE TABLE students (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
+    age INTEGER NOT NULL,
+    birth_date DATE,
+    shirt_size VARCHAR(5),
     parent_id UUID REFERENCES parents(id) ON DELETE SET NULL,
+    group_id UUID REFERENCES groups(id),
     students_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-
--- Create photos table
-CREATE TABLE IF NOT EXISTS photos (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-    filename TEXT NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Tabela de Responsáveis
+-- Tabela de Responsáveis (Guardians)
 CREATE TABLE guardians (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -86,7 +47,7 @@ CREATE TABLE guardians (
     guardians_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de Telefones
+-- Telefones
 CREATE TABLE phones (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -97,7 +58,7 @@ CREATE TABLE phones (
     phone_type VARCHAR(20) CHECK (phone_type IN ('home', 'work', 'mobile'))
 );
 
--- Tabela de Endereços
+-- Endereços
 CREATE TABLE addresses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -110,30 +71,50 @@ CREATE TABLE addresses (
     zip_code VARCHAR(10) NOT NULL
 );
 
--- Tabela de Mídia dos Vídeos
+-- Vídeos
+CREATE TABLE videos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    thumbnail_path VARCHAR(255),
+    slug VARCHAR(100) UNIQUE,
+    published_at TIMESTAMP,
+    is_published BOOLEAN DEFAULT FALSE,
+    num_likes INTEGER DEFAULT 0,
+    num_views INTEGER DEFAULT 0,
+    author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    video_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Mídia dos Vídeos
 CREATE TABLE videomedias (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    video_id UUID NOT NULL REFERENCES videos(id),
+    video_id UUID NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
     video_path VARCHAR NOT NULL,
     status VARCHAR NOT NULL
 );
 
--- Tabela de Tags
-CREATE TABLE tags (
+-- Meus Vídeos (vídeos gravados por pais/responsáveis)
+CREATE TABLE meusvideos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(50) UNIQUE NOT NULL
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    filename TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de Relacionamento Vídeo-Tags
-CREATE TABLE video_tags (
-    video_id UUID REFERENCES videos(id) ON DELETE CASCADE,
-    tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
-    PRIMARY KEY (video_id, tag_id)
+-- Fotos (de alunos)
+CREATE TABLE photos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    filename TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create file metadata table to handle video and photo uploads
-CREATE TABLE IF NOT EXISTS file_metadata (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+-- Metadados de Arquivos
+CREATE TABLE file_metadata (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     file_type VARCHAR(50) CHECK (file_type IN ('video', 'photo')) NOT NULL,
     filename TEXT NOT NULL,
@@ -141,11 +122,87 @@ CREATE TABLE IF NOT EXISTS file_metadata (
     uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Optional: Create logs table to track actions and errors
-CREATE TABLE IF NOT EXISTS logs (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+-- Documentos (dos alunos)
+CREATE TABLE documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    doc_type TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tarefas
+CREATE TABLE tasks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Logs
+CREATE TABLE logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     action TEXT NOT NULL,
     description TEXT,
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tags
+CREATE TABLE tags (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) UNIQUE NOT NULL
+);
+
+-- Relacionamento Vídeo-Tags
+CREATE TABLE video_tags (
+    video_id UUID REFERENCES videos(id) ON DELETE CASCADE,
+    tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (video_id, tag_id)
+);
+
+-- Presenças (chamada)
+CREATE TABLE attendances (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    status VARCHAR(10) CHECK (status IN ('presente', 'falta')) NOT NULL,
+    notes TEXT,
+    UNIQUE(student_id, date)
+);
+
+
+-- Advertências (para faltas consecutivas)
+CREATE TABLE warnings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    reason TEXT NOT NULL,
+    warning_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Salas de Chat (para conversar entre alunos e admin)
+CREATE TABLE chat_rooms (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100),
+    is_group BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Mensagens
+CREATE TABLE messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    room_id UUID REFERENCES chat_rooms(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Mudança de Treinos (agenda e notificações)
+CREATE TABLE schedule_changes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    group_id UUID REFERENCES groups(id),
+    old_date TIMESTAMP,
+    new_date TIMESTAMP,
+    reason TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

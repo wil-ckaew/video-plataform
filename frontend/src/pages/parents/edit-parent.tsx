@@ -1,16 +1,19 @@
-// src/pages/parents/edit-parent/[id].tsx
-import React, { useState, useEffect } from 'react';
+// src/pages/parents/edit-parent.tsx
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import api from '../../utils/axiosConfig'; // Importa a instância configurada
-import { AxiosError } from 'axios';
-import Header from '../../components/Header'; // Importa o Header
+import axios, { AxiosError } from 'axios';
+import Header from '../../components/Header';
+
+interface User {
+  id: string;
+  username: string;
+}
 
 interface Parent {
   id: string;
   name: string;
   email: string;
-  phone: string;
-  created_at: string;
+  user_id: string;
 }
 
 const EditParentPage: React.FC = () => {
@@ -18,116 +21,175 @@ const EditParentPage: React.FC = () => {
   const { id } = router.query;
 
   const [parent, setParent] = useState<Parent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [userId, setUserId] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<{ name: string; email: string; phone: string }>({
-    name: '',
-    email: '',
-    phone: ''
-  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      const fetchParent = async () => {
-        try {
-          const response = await api.get(`/api/parents/${id}`);
-          setParent(response.data.parent);
-          setFormData({
-            name: response.data.parent.name,
-            email: response.data.parent.email,
-            phone: response.data.parent.phone
-          });
+    // Busca lista de usuários para o select
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get('/api/users');
+        setUsers(response.data.users);
+      } catch (err) {
+        setError('Erro ao carregar lista de usuários.');
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchParent = async () => {
+      try {
+        const response = await axios.get(`/api/parents/${id}`);
+        if (response.data.status === 'success') {
+          const p: Parent = response.data.parent;
+          setParent(p);
+          setName(p.name);
+          setEmail(p.email);
+          setUserId(p.user_id);
           setError(null);
-        } catch (error) {
-          if (error instanceof AxiosError) {
-            setError(`Error fetching parent data: ${error.message}`);
-          } else {
-            setError('Unknown error occurred');
-          }
-        } finally {
-          setLoading(false);
+        } else {
+          setError('Não foi possível carregar os dados do pai.');
         }
-      };
+      } catch (err) {
+        setError('Erro ao buscar dados do pai.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      fetchParent();
-    }
+    fetchParent();
   }, [id]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prevState => ({ ...prevState, [name]: value }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!userId || !name || !email) {
+      setError('Todos os campos são obrigatórios.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
     try {
-      await api.patch(`/api/parents/${id}`, formData); // Método PATCH
-      alert('Parent updated successfully');
-      router.push('/parents/parents'); // Redireciona após a atualização para a URL correta
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        alert(`Error updating parent: ${error.message}`);
-      } else {
-        alert('Error updating parent: Unknown error');
-      }
+      await axios.patch(`/api/parents/${id}`, {
+        user_id: userId,
+        name,
+        email,
+      });
+      alert('Pai atualizado com sucesso!');
+      router.push('/parents/parents');
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || 'Erro ao atualizar pai.';
+      setError(message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (loading) {
+    return (
+      <div className="flex flex-col h-screen">
+        <Header />
+        <main className="flex flex-1 items-center justify-center bg-gray-100">
+          <p className="text-gray-600 text-lg">Carregando dados do pai...</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen">
-      <Header /> {/* Adiciona o Header */}
-      <main className="flex-1 overflow-y-auto bg-gray-100 p-4">
-        <h1 className="text-xl font-semibold mb-4">Edit Parent</h1>
-        {parent && (
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <Header />
+      <main className="flex flex-1 overflow-y-auto bg-gray-100 p-6">
+        <section className="bg-white max-w-lg w-full mx-auto p-8 rounded-lg shadow-md">
+          <h2 className="text-2xl font-semibold mb-6 text-gray-800 text-center">Editar Pai</h2>
+
+          {error && (
+            <p className="mb-4 text-center text-red-600 font-medium">
+              {error}
+            </p>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="name" className="block text-gray-700">Name</label>
+              <label htmlFor="name" className="block mb-2 font-medium text-gray-700">
+                Nome
+              </label>
               <input
                 type="text"
                 id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm
+                           focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="Digite o nome do pai"
                 required
+                autoComplete="off"
               />
             </div>
+
             <div>
-              <label htmlFor="email" className="block text-gray-700">Email</label>
+              <label htmlFor="email" className="block mb-2 font-medium text-gray-700">
+                Email
+              </label>
               <input
                 type="email"
                 id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm
+                           focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="Digite o email do pai"
                 required
+                autoComplete="email"
               />
             </div>
+
             <div>
-              <label htmlFor="phone" className="block text-gray-700">Phone</label>
-              <input
-                type="text"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
+              <label htmlFor="userId" className="block mb-2 font-medium text-gray-700">
+                Usuário
+              </label>
+              <select
+                id="userId"
+                value={userId}
+                onChange={e => setUserId(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm
+                           focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 required
-              />
+              >
+                <option value="" disabled>
+                  Selecione um usuário
+                </option>
+                {users.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.username}
+                  </option>
+                ))}
+              </select>
             </div>
+
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              disabled={saving}
+              className={`w-full py-3 rounded-md text-white font-semibold
+                ${saving ? 'bg-green-300 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}
+                transition`}
             >
-              Update Parent
+              {saving ? 'Salvando...' : 'Atualizar Pai'}
             </button>
           </form>
-        )}
+        </section>
       </main>
     </div>
   );

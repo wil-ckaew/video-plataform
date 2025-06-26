@@ -1,99 +1,183 @@
--- Tabela de Usuários
+-- src/schema.sql
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Usuários
 CREATE TABLE users (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL CHECK (role IN ('admin', 'parent', 'student', 'guardian')),
-    users_date TIMESTAMP DEFAULT NOW()
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL,
+    users_date TIMESTAMPTZ DEFAULT now()
 );
 
--- Tabela de Vídeos
+-- Pais (pais ou responsáveis primários)
+CREATE TABLE parents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL
+);
+
+-- Responsáveis adicionais
+CREATE TABLE guardians (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    relationship TEXT NOT NULL
+);
+
+-- Estudantes
+CREATE TABLE students (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES parents(id) ON DELETE SET NULL,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    age INTEGER,
+    birthday DATE,
+    shirt_size TEXT,
+    group_type TEXT CHECK (group_type IN ('pequeno', 'medio', 'grande')),
+    warning_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Endereços
+CREATE TABLE addresses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES parents(id) ON DELETE CASCADE,
+    student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+    guardian_id UUID REFERENCES guardians(id) ON DELETE CASCADE,
+    street TEXT NOT NULL,
+    city TEXT NOT NULL,
+    state TEXT NOT NULL,
+    zip_code TEXT NOT NULL
+);
+
+-- Telefones
+CREATE TABLE phones (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES parents(id) ON DELETE CASCADE,
+    student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+    guardian_id UUID REFERENCES guardians(id) ON DELETE CASCADE,
+    number TEXT NOT NULL,
+    phone_type TEXT
+);
+
+-- Presenças
+CREATE TABLE attendances (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    status TEXT CHECK (status IN ('presente', 'faltou')),
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Vídeos
 CREATE TABLE videos (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    title VARCHAR(255) NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title TEXT NOT NULL,
     description TEXT,
-    thumbnail_path VARCHAR(255),
-    slug VARCHAR(100) UNIQUE,
-    published_at TIMESTAMP,
-    is_published BOOLEAN DEFAULT FALSE,
+    thumbnail_path TEXT,
+    slug TEXT,
+    published_at TIMESTAMPTZ,
+    is_published BOOLEAN,
     num_likes INTEGER DEFAULT 0,
     num_views INTEGER DEFAULT 0,
-    author_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    video_date TIMESTAMP DEFAULT NOW()
+    author_id UUID REFERENCES users(id) ON DELETE SET NULL
 );
 
--- Tabela de Pais (Parentes)
-CREATE TABLE parents (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL
-    parents_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Tabela de Alunos
-CREATE TABLE students (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    parent_id UUID REFERENCES parents(id) ON DELETE SET NULL
-    students_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Tabela de Responsáveis
-CREATE TABLE guardians (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
-    relationship VARCHAR(50) NOT NULL,
-    guardians_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Tabela de Telefones
--- Tabela de Telefones
-CREATE TABLE phones (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,        -- Associa o telefone a um usuário
-    parent_id UUID REFERENCES parents(id) ON DELETE CASCADE,    -- Ou a um parente
-    student_id UUID REFERENCES students(id) ON DELETE CASCADE,  -- Ou a um aluno
-    guardian_id UUID REFERENCES guardians(id) ON DELETE CASCADE, -- Ou a um responsável
-    number VARCHAR(15) NOT NULL,  -- Número de telefone
-    phone_type VARCHAR(20) CHECK (phone_type IN ('home', 'work', 'mobile'))  -- Tipo de telefone (residencial, trabalho, móvel)
-);
-
--- Tabela de Endereços
-CREATE TABLE addresses (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,  -- Associa o endereço a um usuário
-    parent_id UUID REFERENCES parents(id) ON DELETE CASCADE,  -- Ou a um parente
-    student_id UUID REFERENCES students(id) ON DELETE CASCADE,  -- Ou a um aluno
-    guardian_id UUID REFERENCES guardians(id) ON DELETE CASCADE,  -- Ou a um responsável
-    street VARCHAR(100) NOT NULL,
-    city VARCHAR(50) NOT NULL,
-    state VARCHAR(50) NOT NULL,
-    zip_code VARCHAR(10) NOT NULL
-);
-
-
--- Tabela de Mídia dos Vídeos
+-- Mídias de vídeos (arquivos)
 CREATE TABLE videomedias (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    video_id UUID NOT NULL,
-    video_path VARCHAR NOT NULL,
-    status VARCHAR NOT NULL,
-    FOREIGN KEY (video_id) REFERENCES videos(id)
-);
-
--- Tabela de Tags
-CREATE TABLE tags (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    name VARCHAR(50) UNIQUE NOT NULL
-);
-
--- Tabela de Relacionamento Vídeo-Tags
-CREATE TABLE video_tags (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     video_id UUID REFERENCES videos(id) ON DELETE CASCADE,
-    tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
-    PRIMARY KEY (video_id, tag_id)
+    video_path TEXT NOT NULL,
+    status TEXT NOT NULL
 );
+
+-- Tags
+CREATE TABLE tags (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL UNIQUE
+);
+
+-- Associação de vídeos com tags
+CREATE TABLE tagvideos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    video_id UUID REFERENCES videos(id) ON DELETE CASCADE,
+    tag_id UUID REFERENCES tags(id) ON DELETE CASCADE
+);
+
+-- Meus vídeos (vídeos enviados por alunos)
+CREATE TABLE meusvideos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+    filename TEXT NOT NULL,
+    description TEXT
+);
+
+-- Documentos
+CREATE TABLE documents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+    doc_type TEXT NOT NULL,
+    filename TEXT NOT NULL
+);
+
+-- Fotos
+CREATE TABLE photos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID REFERENCES students(id) ON DELETE CASCADE,
+    filename TEXT NOT NULL,
+    description TEXT
+);
+
+-- Metadados de arquivos
+CREATE TABLE filemetadata (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    file_type TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    description TEXT
+);
+
+-- Tarefas
+CREATE TABLE tasks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Logs de atividades
+CREATE TABLE logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    action TEXT NOT NULL,
+    description TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Mensagens entre usuários
+CREATE TABLE messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    sender_id UUID REFERENCES users(id),
+    receiver_id UUID REFERENCES users(id),
+    content TEXT NOT NULL,
+    sent_at TIMESTAMPTZ DEFAULT now()
+);
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateAttendanceSchema {
+    pub student_id: Uuid,
+    pub date: NaiveDate,
+    pub status: String, // "presente" ou "falta"
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateAttendanceSchema {
+    pub student_id: Option<Uuid>,
+    pub date: Option<NaiveDate>,
+    pub status: Option<String>,
+}

@@ -1,13 +1,15 @@
+//backend/src/services/students.rs
 use actix_web::{
-    get, post, delete, patch, web::{Data, Json, scope, Query, Path, ServiceConfig}, HttpResponse, Responder
+    get, post, delete, patch,
+    web::{Data, Json, Query, Path, ServiceConfig},
+    HttpResponse, Responder,
 };
 use serde_json::json;
 use crate::{
     models::StudentModel,
     schema::{CreateStudentSchema, UpdateStudentSchema, FilterOptions},
-    AppState
+    AppState,
 };
-use sqlx::PgPool;
 use uuid::Uuid;
 
 /// Handler para criar um estudante
@@ -17,39 +19,34 @@ async fn create_student(
     data: Data<AppState>
 ) -> impl Responder {
     let query = r#"
-        INSERT INTO students (user_id, name, email, parent_id)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, user_id, name, email, parent_id, students_date
+        INSERT INTO students (user_id, name, email, age, birth_date, shirt_size, parent_id, group_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, user_id, name, email, age, birth_date, shirt_size, parent_id, group_id, students_date
     "#;
 
     match sqlx::query_as::<_, StudentModel>(query)
         .bind(body.user_id)
         .bind(&body.name)
         .bind(&body.email)
-        .bind(&body.parent_id)
+        .bind(body.age)
+        .bind(body.birth_date)
+        .bind(&body.shirt_size)
+        .bind(body.parent_id)       // Option<Uuid>
+        .bind(body.group_id)        // Option<Uuid>
         .fetch_one(&data.db)
         .await
     {
         Ok(student) => {
-            let response = json!({
+            HttpResponse::Created().json(json!({
                 "status": "success",
-                "parent": {
-                    "id": student.id,
-                    "user_id": student.user_id,
-                    "name": student.name,
-                    "email": student.email,
-                    "parent_id": student.parent_id,
-                    "students_date": student.students_date
-                }
-            });
-            HttpResponse::Created().json(response)
+                "student": student
+            }))
         }
         Err(error) => {
-            let response = json!({
+            HttpResponse::InternalServerError().json(json!({
                 "status": "error",
                 "message": format!("Failed to create student: {:?}", error)
-            });
-            HttpResponse::InternalServerError().json(response)
+            }))
         }
     }
 }
@@ -65,7 +62,12 @@ async fn get_all_students(
 
     match sqlx::query_as!(
         StudentModel,
-        "SELECT * FROM students ORDER BY id LIMIT $1 OFFSET $2",
+        r#"
+        SELECT id, user_id, name, email, age, birth_date, shirt_size, parent_id, group_id, students_date
+        FROM students
+        ORDER BY id
+        LIMIT $1 OFFSET $2
+        "#,
         limit as i32,
         offset as i32
     )
@@ -73,18 +75,16 @@ async fn get_all_students(
     .await
     {
         Ok(students) => {
-            let response = json!({
+            HttpResponse::Ok().json(json!({
                 "status": "success",
                 "students": students
-            });
-            HttpResponse::Ok().json(response)
+            }))
         }
         Err(error) => {
-            let response = json!({
+            HttpResponse::InternalServerError().json(json!({
                 "status": "error",
                 "message": format!("Failed to get students: {:?}", error)
-            });
-            HttpResponse::InternalServerError().json(response)
+            }))
         }
     }
 }
@@ -99,25 +99,27 @@ async fn get_student_by_id(
 
     match sqlx::query_as!(
         StudentModel,
-        "SELECT * FROM students WHERE id = $1",
+        r#"
+        SELECT id, user_id, name, email, age, birth_date, shirt_size, parent_id, group_id, students_date
+        FROM students
+        WHERE id = $1
+        "#,
         student_id
     )
     .fetch_one(&data.db)
     .await
     {
         Ok(student) => {
-            let response = json!({
+            HttpResponse::Ok().json(json!({
                 "status": "success",
                 "student": student
-            });
-            HttpResponse::Ok().json(response)
+            }))
         }
         Err(error) => {
-            let response = json!({
+            HttpResponse::InternalServerError().json(json!({
                 "status": "error",
                 "message": format!("Failed to get student: {:?}", error)
-            });
-            HttpResponse::InternalServerError().json(response)
+            }))
         }
     }
 }
@@ -131,19 +133,43 @@ async fn update_student_by_id(
 ) -> impl Responder {
     let student_id = path.into_inner();
 
-    match sqlx::query_as!(StudentModel, "SELECT * FROM students WHERE id = $1", student_id)
-        .fetch_one(&data.db)
-        .await
+    // Verifica se estudante existe
+    match sqlx::query_as!(
+        StudentModel,
+        r#"
+        SELECT id, user_id, name, email, age, birth_date, shirt_size, parent_id, group_id, students_date
+        FROM students
+        WHERE id = $1
+        "#,
+        student_id
+    )
+    .fetch_one(&data.db)
+    .await
     {
-        Ok(student) => {
+        Ok(_) => {
             let update_result = sqlx::query_as!(
                 StudentModel,
-                "UPDATE students SET user_id = COALESCE($1, user_id), name = COALESCE($2, name), email = COALESCE($3, email), parent_id = COALESCE($4, parent_id)
-                WHERE id = $5 RETURNING *",
-                body.user_id.as_ref(),
+                r#"
+                UPDATE students SET
+                    user_id = COALESCE($1, user_id),
+                    name = COALESCE($2, name),
+                    email = COALESCE($3, email),
+                    age = COALESCE($4, age),
+                    birth_date = COALESCE($5, birth_date),
+                    shirt_size = COALESCE($6, shirt_size),
+                    parent_id = COALESCE($7, parent_id),
+                    group_id = COALESCE($8, group_id)
+                WHERE id = $9
+                RETURNING id, user_id, name, email, age, birth_date, shirt_size, parent_id, group_id, students_date
+                "#,
+                body.user_id,
                 body.name.as_ref(),
                 body.email.as_ref(),
-                body.parent_id.as_ref(),
+                body.age,
+                body.birth_date,
+                body.shirt_size.as_ref(),
+                body.parent_id,
+                body.group_id,
                 student_id
             )
             .fetch_one(&data.db)
@@ -151,27 +177,24 @@ async fn update_student_by_id(
 
             match update_result {
                 Ok(updated_student) => {
-                    let response = json!({
+                    HttpResponse::Ok().json(json!({
                         "status": "success",
                         "student": updated_student
-                    });
-                    HttpResponse::Ok().json(response)
+                    }))
                 }
-                Err(update_error) => {
-                    let response = json!({
+                Err(error) => {
+                    HttpResponse::InternalServerError().json(json!({
                         "status": "error",
-                        "message": format!("Failed to update student: {:?}", update_error)
-                    });
-                    HttpResponse::InternalServerError().json(response)
+                        "message": format!("Failed to update student: {:?}", error)
+                    }))
                 }
             }
         }
-        Err(fetch_error) => {
-            let response = json!({
+        Err(error) => {
+            HttpResponse::NotFound().json(json!({
                 "status": "error",
-                "message": format!("Student not found: {:?}", fetch_error)
-            });
-            HttpResponse::NotFound().json(response)
+                "message": format!("Student not found: {:?}", error)
+            }))
         }
     }
 }
@@ -196,11 +219,11 @@ async fn delete_student_by_id(
     }
 }
 
-// Configuração das rotas para estudantes
+// Configuração das rotas
 pub fn config_students(conf: &mut ServiceConfig) {
     conf.service(create_student)
-       .service(get_all_students)
-       .service(get_student_by_id)
-       .service(update_student_by_id)
-       .service(delete_student_by_id);
+        .service(get_all_students)
+        .service(get_student_by_id)
+        .service(update_student_by_id)
+        .service(delete_student_by_id);
 }
