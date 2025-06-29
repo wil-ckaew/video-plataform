@@ -74,7 +74,7 @@ async fn main() -> std::io::Result<()> {
          //   .service(Files::new("/static", "./static").show_files_listing()) // Serve arquivos estáticos
            // .service(Files::new("/uploads", "./uploads").show_files_listing()) // Servir arquivos estáticos do diretório de uploads
         })
-    .bind("127.0.0.1:8080")? // Bind the server to port 8080
+    .bind("0.0.0.0:8080")?  // <-- AQUI ESTÁ A CORREÇÃO
     .run()
     .await
 }

@@ -1,5 +1,5 @@
 # Use uma imagem base de Rust mais recente
-#FROM rust:1.82
+#transcoder/Dockerfile
 FROM rust:latest
 
 RUN apt-get update && \

@@ -1,13 +1,15 @@
 # Build Stage
-FROM node:18-alpine AS build
-WORKDIR /pages
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
+#frontend/Dockerfile
+FROM node:18-alpine
 
-# Production Stage
-FROM nginx:alpine
-COPY --from=build /pages/.next /usr/share/nginx/html/.next
-COPY --from=build /pages/public /usr/share/nginx/html/public
-COPY --from=build /pages/nginx.conf /etc/nginx/nginx.conf
+WORKDIR /app
+
+COPY package*.json ./
+
+# Evita conflitos de dependências (como o do react-image-lightbox)
+RUN npm install --legacy-peer-deps
+
+COPY . .
+
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
